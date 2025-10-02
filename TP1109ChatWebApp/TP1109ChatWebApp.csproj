@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <BaseOutputPath>..\bin\</BaseOutputPath>
+    <PublishSingleFile>true</PublishSingleFile>
+    <OutputType>WinExe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" />
+    <EmbeddedResource Include="..\web\dist\**\*" />
+    <EmbeddedResource Include="..\assets\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EmbedIO" Version="3.5.2" />
+    <PackageReference Include="Microsoft.Graph" Version="5.93.0" />
+    <PackageReference Include="System.IO.Ports" Version="9.0.9" />
+  </ItemGroup>
+
+</Project>

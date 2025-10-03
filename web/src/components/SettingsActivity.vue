@@ -22,17 +22,25 @@
                 <p>检查安装状态中...</p>
             </div>
         </fieldset>
+
+        <fieldset>
+            <legend>配置文件</legend>
+            <div>当前配置文件: <ElButton @click="getProfile">{{ (currentProfile == null) ? "点击获取" : (currentProfile || "默认配置文件") }}</ElButton></div>
+            <ElButton @click="setProfile">选择配置文件</ElButton>
+        </fieldset>
     </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import File from '../file';
 
 const installed = ref(null);
 const isInstalling = ref(false);
 const installLocation = ref('');
 const isPicking = ref(false);
+const currentProfile = ref(null);
 
 onMounted(() => {
     fetch("/api/settings/installed").then(res => res.json()).then(data => {
@@ -75,6 +83,15 @@ function selectInstallLocation() {
     }).catch(() => { }).finally(() => {
         isPicking.value = false;
     });
+}
+
+function getProfile() {
+    currentProfile.value = File.getProfile();
+}
+function setProfile() {
+    sessionStorage.removeItem("profile");
+    history.replaceState({}, "", "/?select_profile=true");
+    location.reload();
 }
 </script>
 

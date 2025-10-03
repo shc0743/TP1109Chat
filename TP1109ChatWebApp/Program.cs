@@ -397,6 +397,10 @@ del /f /q ""%~f0""
 		Directory.CreateDirectory(appRoot);
 		Program.appDataDir = appRoot;
 
+		bool createdNew = false, shouldSelectProfile = false;
+		var mutex = new Mutex(false, $"Global\\{AppUserModel.AppId}@{Environment.UserName}", out createdNew);
+		if (!createdNew) shouldSelectProfile = true;
+
 		// 启动 EmbedIO 服务器
 		using var server = new WebServer(o => o
 			.WithUrlPrefix(url)
@@ -428,12 +432,14 @@ del /f /q ""%~f0""
 			throw new Exception("win64-webview.exe not found after extraction!");
 		}
 
+		string run_url = shouldSelectProfile ? $"{url}?select_profile=true" : url;
+
 		using var webviewProcess = new System.Diagnostics.Process
 		{
 			StartInfo = new ProcessStartInfo
 			{
 				FileName = webviewPath,
-				Arguments = $"{url} ./ 800x600 {AppUserModel.AppId} {AppUserModel.AppId}",
+				Arguments = $"{run_url} ./ 800x600 {AppUserModel.AppId} {AppUserModel.AppId}",
 				UseShellExecute = false
 			}
 		};
@@ -445,7 +451,7 @@ del /f /q ""%~f0""
 
 		// 浏览器关闭后停止 EmbedIO
 		server.Dispose();
-
+		mutex?.Close();
 		Console.WriteLine("Browser closed. Server stopped. Exiting...");
 		return 0;
 	}

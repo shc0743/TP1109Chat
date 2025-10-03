@@ -4,10 +4,23 @@
         <div class="row">
             <span>蓝牙设备：</span>
             <ElSelect :disabled="isConnected" v-model="device" placeholder="请选择蓝牙设备">
-                <ElOption v-for="dev in devices" :label="getDevLabel(dev)" :value="dev.index"></ElOption>
+                <template v-for="dev in devices">
+                    <ElOption v-if="showAllDevices || (!!dev.name)" :label="getDevLabel(dev)" :value="dev.index"></ElOption>
+                </template>
             </ElSelect>
             <ElButton :disabled="isConnected" style="margin-left: 12px;" @click="scanDevices">扫描</ElButton>
             <ElButton class="ml05" @click="connectOrDisconnect">{{ isConnected ? '断开连接' : '连接' }}</ElButton>
+        </div>
+        <div class="row">
+            <ElCheckbox v-model="showAllDevices">显示所有设备（包括未命名的）</ElCheckbox>
+        </div>
+        <div class="row">
+            <span>通过设备地址连接</span>
+            <ElInput style="flex: 1;" class="ml05" v-model="address" placeholder="输入设备地址 (十六进制)" />
+            <ElButton class="ml05" @click="connectByAddress">连接</ElButton>
+        </div>
+        <div class="row">
+            注意：即使已知设备地址，也可能需要先扫描
         </div>
         <div class="row">
             <span>UUID参考:</span>
@@ -40,6 +53,8 @@ import { ElMessage, ElProgress } from 'element-plus';
 
 const devices = ref([]);
 const device = ref('');
+const showAllDevices = ref(false);
+const address = ref('');
 const isConnected = ref(false);
 const progress = ref(null);
 const progressTimeLeft = ref(0);
@@ -109,7 +124,7 @@ function handleDialogCancel() {
 }
 
 function getDevLabel(dev) {
-    return `${dev.index}: ${dev.name} rssi=${dev.rssi} addr=0x${dev.addr.toString(16).padStart(16, '0')}`;
+    return `${dev.index}: ${dev.name || '(no name)'} rssi=${dev.rssi} addr=0x${BigInt(dev.addr).toString(16).padStart(12, '0')}`;
 }
 
 async function connectOrDisconnect() {
@@ -126,15 +141,6 @@ async function connectOrDisconnect() {
             }
         }
     } catch {}
-    if (!devices.value || !device.value) {
-        ElMessage.error("请先选择蓝牙设备");
-        return;
-    }
-    const addr = devices.value[device.value].addr;
-    if (!addr) {
-        ElMessage.error("请先选择蓝牙设备");
-        return;
-    }
     if (isConnected.value) {
         ElMessage.info("正在断开连接，请稍候…");
         try {
@@ -147,6 +153,18 @@ async function connectOrDisconnect() {
         }
         return;
     }
+    if (!devices.value || device.value === '') {
+        ElMessage.error("请先选择蓝牙设备");
+        return;
+    }
+    const addr = devices.value[device.value].addr;
+    if (!addr) {
+        ElMessage.error("请先选择蓝牙设备");
+        return;
+    }
+    await connectAddr(addr);
+}
+async function connectAddr(addr) {
     progress.value.showModal();
     progressTimeLeft.value = 10;
     progressTimerId.value = setInterval(() => {
@@ -165,7 +183,7 @@ async function connectOrDisconnect() {
             return;
         }
         isConnected.value = true;
-        ElMessage.success("已连接到 " + getDevLabel(devices.value[device.value]));
+        ElMessage.success("已连接");
     }
     catch (error) {
         ElMessage.error("连接到 " + getDevLabel(devices.value[device.value]) + " 失败：" + error);
@@ -175,6 +193,18 @@ async function connectOrDisconnect() {
         clearInterval(progressTimerId.value);
         progressTimerId.value = null;
     }
+}
+
+function connectByAddress() {
+    if (isConnected.value) {
+        ElMessage.error("请先断开当前连接");
+        return;
+    }
+    if (!(address.value)) {
+        ElMessage.error("请输入设备地址");
+        return;
+    }
+    connectAddr(parseInt(address.value.replace(/^0x/i, ''), 16));
 }
 </script>
 

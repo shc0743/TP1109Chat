@@ -1,9 +1,11 @@
 <script setup>
-import { ref, markRaw } from 'vue';
+import { ref, markRaw, onMounted } from 'vue';
 import ChatActivity from './components/ChatActivity.vue';
 import BluetoothActivity from './components/BluetoothActivity.vue';
 import SerialActivity from './components/SerialActivity.vue';
 import SettingsActivity from './components/SettingsActivity.vue';
+import File from './file';
+import { ElMessage } from 'element-plus';
 
 const page = ref('chat')
 const pages = ref([
@@ -12,6 +14,30 @@ const pages = ref([
     ['seri', '串口', markRaw(SerialActivity)],
     ['sett', '设置', markRaw(SettingsActivity)],
 ]);
+const profileSelector = ref(null);
+const profile = ref('');
+
+function finalizeProfileSelector(accept) {
+    if (!accept) {
+        window.close();
+    }
+    if (profile.value.includes("/") || profile.value.includes("\\")) {
+        ElMessage.error('配置文件名称不允许包含 / 或 \\');
+        return;
+    }
+    // File.setProfile(profile.value);
+    // profileSelector.value.close();
+    sessionStorage.setItem("profile", profile.value);
+    location.reload();
+}
+
+onMounted(() => {
+    if (location.search.includes("select_profile=true")) {
+        if (null === sessionStorage.getItem("profile")) {
+            profileSelector.value.showModal();
+        }
+    }
+})
 </script>
 
 <template>
@@ -25,6 +51,16 @@ const pages = ref([
                 <component :is="item[2]" v-show="page === item[0]"/>
             </template>
         </div>
+
+        <dialog ref="profileSelector" class="plain-dialog" @cancel="finalizeProfileSelector(false)">
+            <div style="font-size: 1.5em; text-align: center;">选择配置文件</div>
+            <ElInput @keydown.enter.prevent="finalizeProfileSelector(true)" style="margin: 0.5em 0;" autofocus v-model="profile" placeholder="默认配置文件" clearable />
+            <div style="color: red;">注意: 请勿使用多个实例访问同一个配置文件</div>
+            <div style="display: flex; margin-top: 0.5em;">
+                <ElButton style="flex: 1;" type="success" plain @click="finalizeProfileSelector(true)">确定</ElButton>
+                <ElButton style="flex: 1;" type="danger" plain @click="finalizeProfileSelector(false)">取消</ElButton>
+            </div>
+        </dialog>
     </div>
 </template>
 

@@ -1,4 +1,6 @@
 export default class File {
+    static _profilePrefix = '';
+    
     /**
      * 构建文件URL
      * @param {string} filename 
@@ -6,8 +8,15 @@ export default class File {
      */
     static _buildUrl(filename) {
         const url = new URL('/api/fs/object', window.location.origin);
-        url.searchParams.set('name', filename);
+        url.searchParams.set('name', this._profilePrefix + filename);
         return url.toString();
+    }
+
+    static getProfile() {
+        return this._profilePrefix;
+    }
+    static setProfile(profileName) {
+        this._profilePrefix = profileName ? `${profileName}#` : '';
     }
 
     /**
@@ -42,6 +51,7 @@ export default class File {
     static async readText(filename, encoding = 'UTF-8') {
         const url = this._buildUrl(filename);
         const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
         const buffer = await this._handleResponse(response).arrayBuffer();
         const decoder = new TextDecoder(encoding.toLowerCase());
         return decoder.decode(buffer);

@@ -146,186 +146,202 @@ public class ApiController : WebApiController
 		}
 	}
 
-    [Route(HttpVerbs.Get, "/fs/object")]
-    public async Task<object> GetFile()
-    {
-        var name = HttpContext.Request.QueryString["name"];
+	[Route(HttpVerbs.Get, "/fs/object")]
+	public async Task GetFile()
+	{
+		var name = HttpContext.Request.QueryString["name"];
 
-        if (string.IsNullOrEmpty(name))
-        {
-            HttpContext.Response.StatusCode = 400;
-            return HttpContext.SendStringAsync("文件名不能为空", "text/plain", Encoding.UTF8);
-        }
+		if (string.IsNullOrEmpty(name))
+		{
+			HttpContext.Response.StatusCode = 400;
+			await HttpContext.SendStringAsync("文件名不能为空", "text/plain", Encoding.UTF8);
+			return;
+		}
 
-        // 防止路径遍历攻击
-        if (name.Contains("..") || Path.IsPathRooted(name))
-        {
-            HttpContext.Response.StatusCode = 400;
-            return HttpContext.SendStringAsync("无效的文件名", "text/plain", Encoding.UTF8);
-        }
+		// 防止路径遍历攻击
+		if (name.Contains("..") || Path.IsPathRooted(name))
+		{
+			HttpContext.Response.StatusCode = 400;
+			await HttpContext.SendStringAsync("无效的文件名", "text/plain", Encoding.UTF8);
+			return;
+		}
 
-        var filePath = Path.Combine(Program.appDataDir, name);
+		var filePath = Path.Combine(Program.appDataDir, name);
 
-        try
-        {
-            if (!File.Exists(filePath))
-            {
-                HttpContext.Response.StatusCode = 404;
-                return HttpContext.SendStringAsync("文件不存在", "text/plain", Encoding.UTF8);
-            }
+		try
+		{
+			if (!File.Exists(filePath))
+			{
+				HttpContext.Response.StatusCode = 404;
+				await HttpContext.SendStringAsync("文件不存在", "text/plain", Encoding.UTF8);
+				return;
+			}
 
-            var fileBytes = await File.ReadAllBytesAsync(filePath);
-            HttpContext.Response.ContentType = "application/octet-stream";
-            return HttpContext.Response.OutputStream.WriteAsync(fileBytes, 0, fileBytes.Length);
-        }
-        catch (Exception ex)
-        {
-            HttpContext.Response.StatusCode = 500;
-            return HttpContext.SendStringAsync($"读取文件失败: {ex.Message}", "text/plain", Encoding.UTF8);
-        }
-    }
+			var fileBytes = await File.ReadAllBytesAsync(filePath);
+			HttpContext.Response.ContentType = "application/octet-stream";
+			await HttpContext.Response.OutputStream.WriteAsync(fileBytes, 0, fileBytes.Length);
+		}
+		catch (Exception ex)
+		{
+			HttpContext.Response.StatusCode = 500;
+			await HttpContext.SendStringAsync($"读取文件失败: {ex.Message}", "text/plain", Encoding.UTF8);
+			return;
+		}
+	}
 
-    [Route(HttpVerbs.Head, "/fs/object")]
-    public async Task<object> HeadFile()
-    {
-        var name = HttpContext.Request.QueryString["name"];
+	[Route(HttpVerbs.Head, "/fs/object")]
+	public async Task HeadFile()
+	{
+		var name = HttpContext.Request.QueryString["name"];
 		await Task.FromResult(0);
 
-        if (string.IsNullOrEmpty(name))
-        {
-            HttpContext.Response.StatusCode = 400;
-            return HttpContext.SendStringAsync("文件名不能为空", "text/plain", Encoding.UTF8);
-        }
+		if (string.IsNullOrEmpty(name))
+		{
+			HttpContext.Response.StatusCode = 400;
+			await HttpContext.SendStringAsync("文件名不能为空", "text/plain", Encoding.UTF8);
+			return;
+		}
 
-        // 防止路径遍历攻击
-        if (name.Contains("..") || Path.IsPathRooted(name))
-        {
-            HttpContext.Response.StatusCode = 400;
-            return HttpContext.SendStringAsync("无效的文件名", "text/plain", Encoding.UTF8);
-        }
+		// 防止路径遍历攻击
+		if (name.Contains("..") || Path.IsPathRooted(name))
+		{
+			HttpContext.Response.StatusCode = 400;
+			await HttpContext.SendStringAsync("无效的文件名", "text/plain", Encoding.UTF8);
+			return;
+		}
 
-        var filePath = Path.Combine(Program.appDataDir, name);
+		var filePath = Path.Combine(Program.appDataDir, name);
 
-        try
-        {
-            if (!File.Exists(filePath))
-            {
-                HttpContext.Response.StatusCode = 404;
-                return HttpContext.SendStringAsync("文件不存在", "text/plain", Encoding.UTF8);
-            }
+		try
+		{
+			if (!File.Exists(filePath))
+			{
+				HttpContext.Response.StatusCode = 404;
+				await HttpContext.SendStringAsync("文件不存在", "text/plain", Encoding.UTF8);
+				return;
+			}
 
-            var fileInfo = new FileInfo(filePath);
+			var fileInfo = new FileInfo(filePath);
 
-            // 设置文件元数据头
-            HttpContext.Response.Headers["X-File-Size"] = fileInfo.Length.ToString();
-            HttpContext.Response.Headers["X-File-Creation"] = fileInfo.CreationTimeUtc.ToString("yyyyMMddTHHmmss.fffZ");
-            HttpContext.Response.Headers["X-File-Last-Modified"] = fileInfo.LastWriteTimeUtc.ToString("yyyyMMddTHHmmss.fffZ");
-            HttpContext.Response.Headers["X-File-Last-Access"] = fileInfo.LastAccessTimeUtc.ToString("yyyyMMddTHHmmss.fffZ");
+			// 设置文件元数据头
+			HttpContext.Response.Headers["X-File-Size"] = fileInfo.Length.ToString();
+			HttpContext.Response.Headers["X-File-Creation"] = fileInfo.CreationTimeUtc.ToString("yyyyMMddTHHmmss.fffZ");
+			HttpContext.Response.Headers["X-File-Last-Modified"] = fileInfo.LastWriteTimeUtc.ToString("yyyyMMddTHHmmss.fffZ");
+			HttpContext.Response.Headers["X-File-Last-Access"] = fileInfo.LastAccessTimeUtc.ToString("yyyyMMddTHHmmss.fffZ");
 
-            // HEAD请求不返回内容体，只返回头部
-            HttpContext.Response.StatusCode = 200;
-            return Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            HttpContext.Response.StatusCode = 500;
-            return HttpContext.SendStringAsync($"获取文件信息失败: {ex.Message}", "text/plain", Encoding.UTF8);
-        }
-    }
+			// HEAD请求不返回内容体，只返回头部
+			HttpContext.Response.StatusCode = 200;
+			return;
+		}
+		catch (Exception ex)
+		{
+			HttpContext.Response.StatusCode = 500;
+			await HttpContext.SendStringAsync($"获取文件信息失败: {ex.Message}", "text/plain", Encoding.UTF8);
+			return;
+		}
+	}
 
-    [Route(HttpVerbs.Put, "/fs/object")]
-    public async Task<object> PutFile()
-    {
-        var name = HttpContext.Request.QueryString["name"];
+	[Route(HttpVerbs.Put, "/fs/object")]
+	public async Task PutFile()
+	{
+		var name = HttpContext.Request.QueryString["name"];
 
-        if (string.IsNullOrEmpty(name))
-        {
-            HttpContext.Response.StatusCode = 400;
-            return HttpContext.SendStringAsync("文件名不能为空", "text/plain", Encoding.UTF8);
-        }
+		if (string.IsNullOrEmpty(name))
+		{
+			HttpContext.Response.StatusCode = 400;
+			await HttpContext.SendStringAsync("文件名不能为空", "text/plain", Encoding.UTF8);
+			return;
+		}
 
-        // 防止路径遍历攻击
-        if (name.Contains("..") || Path.IsPathRooted(name))
-        {
-            HttpContext.Response.StatusCode = 400;
-            return HttpContext.SendStringAsync("无效的文件名", "text/plain", Encoding.UTF8);
-        }
+		// 防止路径遍历攻击
+		if (name.Contains("..") || Path.IsPathRooted(name))
+		{
+			HttpContext.Response.StatusCode = 400;
+			await HttpContext.SendStringAsync("无效的文件名", "text/plain", Encoding.UTF8);
+			return;
+		}
 
-        var filePath = Path.Combine(Program.appDataDir, name);
+		var filePath = Path.Combine(Program.appDataDir, name);
 
-        try
-        {
-            // 确保目录存在
-            var directory = Path.GetDirectoryName(filePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
+		try
+		{
+			// 确保目录存在
+			var directory = Path.GetDirectoryName(filePath);
+			if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+			{
+				Directory.CreateDirectory(directory);
+			}
 
-            // 读取请求体中的二进制数据
-            using var stream = HttpContext.OpenRequestStream();
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            var fileBytes = memoryStream.ToArray();
+			// 读取请求体中的二进制数据
+			using var stream = HttpContext.OpenRequestStream();
+			using var memoryStream = new MemoryStream();
+			await stream.CopyToAsync(memoryStream);
+			var fileBytes = memoryStream.ToArray();
 
-            // 写入文件
-            await File.WriteAllBytesAsync(filePath, fileBytes);
+			// 写入文件
+			await File.WriteAllBytesAsync(filePath, fileBytes);
 
-            return new { success = true, bytesWritten = fileBytes.Length };
-        }
-        catch (Exception ex)
-        {
-            HttpContext.Response.StatusCode = 500;
-            return HttpContext.SendStringAsync($"写入文件失败: {ex.Message}", "text/plain", Encoding.UTF8);
-        }
-    }
+			HttpContext.Response.StatusCode = 201;
+			return;
+		}
+		catch (Exception ex)
+		{
+			HttpContext.Response.StatusCode = 500;
+			await HttpContext.SendStringAsync($"写入文件失败: {ex.Message}", "text/plain", Encoding.UTF8);
+			return;
+		}
+	}
 
-    [Route(HttpVerbs.Delete, "/fs/object")]
-    public async Task<object> DeleteFile()
-    {
-        var name = HttpContext.Request.QueryString["name"];
-        await Task.FromResult(0);
+	[Route(HttpVerbs.Delete, "/fs/object")]
+	public async Task DeleteFile()
+	{
+		var name = HttpContext.Request.QueryString["name"];
+		await Task.FromResult(0);
 
-        if (string.IsNullOrEmpty(name))
-        {
-            HttpContext.Response.StatusCode = 400;
-            return HttpContext.SendStringAsync("文件名不能为空", "text/plain", Encoding.UTF8);
-        }
+		if (string.IsNullOrEmpty(name))
+		{
+			HttpContext.Response.StatusCode = 400;
+			await HttpContext.SendStringAsync("文件名不能为空", "text/plain", Encoding.UTF8);
+			return;
+		}
 
-        // 防止路径遍历攻击
-        if (name.Contains("..") || Path.IsPathRooted(name))
-        {
-            HttpContext.Response.StatusCode = 400;
-            return HttpContext.SendStringAsync("无效的文件名", "text/plain", Encoding.UTF8);
-        }
+		// 防止路径遍历攻击
+		if (name.Contains("..") || Path.IsPathRooted(name))
+		{
+			HttpContext.Response.StatusCode = 400;
+			await HttpContext.SendStringAsync("无效的文件名", "text/plain", Encoding.UTF8);
+			return;
+		}
 
-        var filePath = Path.Combine(Program.appDataDir, name);
+		var filePath = Path.Combine(Program.appDataDir, name);
 
-        try
-        {
-            if (!File.Exists(filePath))
-            {
-                HttpContext.Response.StatusCode = 404;
-                return HttpContext.SendStringAsync("文件不存在", "text/plain", Encoding.UTF8);
-            }
+		try
+		{
+			if (!File.Exists(filePath))
+			{
+				HttpContext.Response.StatusCode = 404;
+				await HttpContext.SendStringAsync("文件不存在", "text/plain", Encoding.UTF8);
+				return;
+			}
 
-            File.Delete(filePath);
+			File.Delete(filePath);
 
-            // 返回204 No Content
-            HttpContext.Response.StatusCode = 204;
-            return Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            HttpContext.Response.StatusCode = 500;
-            return HttpContext.SendStringAsync($"删除文件失败: {ex.Message}", "text/plain", Encoding.UTF8);
-        }
-    }
+			// 返回204 No Content
+			HttpContext.Response.StatusCode = 204;
+			return;
+		}
+		catch (Exception ex)
+		{
+			HttpContext.Response.StatusCode = 500;
+			await HttpContext.SendStringAsync($"删除文件失败: {ex.Message}", "text/plain", Encoding.UTF8);
+			return;
+		}
+	}
 
-    /* ---- */
-    // 串口
+	/* ---- */
+	// 串口
 
-    [Route(HttpVerbs.Get, "/serial/scan")]
+	[Route(HttpVerbs.Get, "/serial/scan")]
 	public object ScanPorts()
 	{
 		var ports = SerialPort.GetPortNames();
@@ -570,7 +586,7 @@ public class ApiController : WebApiController
 			{
 				var addr = e.BluetoothAddress;
 				var name = e.Advertisement?.LocalName;
-				if (string.IsNullOrWhiteSpace(name)) name = "(no name)";
+				if (string.IsNullOrWhiteSpace(name)) name = "";
 				// 更新字典（保留最近一次 RSSI）
 				found.AddOrUpdate(addr, (name, e.RawSignalStrengthInDBm), (k, v) => (name, e.RawSignalStrengthInDBm));
 			};
@@ -625,9 +641,9 @@ public class ApiController : WebApiController
 	}
 
 	public static BluetoothLEDevice? ble;
-    public static GattDeviceService? ble_svc;
-    public static GattCharacteristic? ble_notifyChar;
-    public static GattCharacteristic? ble_writeChar;
+	public static GattDeviceService? ble_svc;
+	public static GattCharacteristic? ble_notifyChar;
+	public static GattCharacteristic? ble_writeChar;
 
 	[Route(HttpVerbs.Post, "/bluetooth/connect")]
 	public async Task<object> ConnectBluetoothDevice()
@@ -641,7 +657,7 @@ public class ApiController : WebApiController
 		}
 
 		if (already) return new { success = true };
-        if (!ulong.TryParse(data.text1, out ulong addr))
+		if (!ulong.TryParse(data.text1, out ulong addr))
 		{
 			return new { success = false, error = "无效的设备地址" };
 		}
@@ -698,47 +714,47 @@ public class ApiController : WebApiController
 
 		try
 		{
-            if (ble_notifyChar != null)
-            {
-                try
-                {
-                    ble_notifyChar.ValueChanged -= NotifyChar_ValueChanged;
-                    await ble_notifyChar.WriteClientCharacteristicConfigurationDescriptorAsync(
-                        GattClientCharacteristicConfigurationDescriptorValue.None);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"取消通知订阅时出错: {ex.Message}");
-                }
-                ble_notifyChar = null;
-            }
+			if (ble_notifyChar != null)
+			{
+				try
+				{
+					ble_notifyChar.ValueChanged -= NotifyChar_ValueChanged;
+					await ble_notifyChar.WriteClientCharacteristicConfigurationDescriptorAsync(
+						GattClientCharacteristicConfigurationDescriptorValue.None);
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"取消通知订阅时出错: {ex.Message}");
+				}
+				ble_notifyChar = null;
+			}
 
-            try
-            {
-                ble_writeChar?.Service?.Dispose();
-                ble_notifyChar?.Service?.Dispose();
-                ble_writeChar = null;
-                ble_notifyChar = null;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"释放特征时出错: {ex.Message}");
-            }
+			try
+			{
+				ble_writeChar?.Service?.Dispose();
+				ble_notifyChar?.Service?.Dispose();
+				ble_writeChar = null;
+				ble_notifyChar = null;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"释放特征时出错: {ex.Message}");
+			}
 
-            if (ble != null)
-            {
-                try
-                {
-                    ble.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"断开设备时出错: {ex.Message}");
-                }
-                ble = null;
-            }
+			if (ble != null)
+			{
+				try
+				{
+					ble.Dispose();
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"断开设备时出错: {ex.Message}");
+				}
+				ble = null;
+			}
 
-            ble_svc = null; 
+			ble_svc = null; 
 			lock (_lock) { bluetoothConnected = false; }
 			return new { success = true };
 		}
@@ -775,75 +791,80 @@ public class ApiController : WebApiController
 	{
 		if (frame == null || frame.Length == 0) return;
 
-        ChatModule.ForwardToWebSocket(frame);
-    }
+		ChatModule.ForwardToWebSocket(frame);
+	}
 }
 
 
 public class ChatModule : WebSocketModule
 {
-    private static ChatModule? _instance;
-    private IWebSocketContext? _currentClient;
-    private readonly object _clientLock = new();
+	private static ChatModule? _instance;
+	private IWebSocketContext? _currentClient;
+	private readonly object _clientLock = new();
 
-    public ChatModule(string urlPath) : base(urlPath, true)
-    {
-        _instance = this;
-    }
+	public ChatModule(string urlPath) : base(urlPath, true)
+	{
+		_instance = this;
+	}
 
-    // 从蓝牙接收数据后直接转发给WebSocket客户端
-    public static void ForwardToWebSocket(byte[] data)
-    {
-        _instance?._ForwardToWebSocket(data);
-    }
+	// 从蓝牙接收数据后直接转发给WebSocket客户端
+	public static void ForwardToWebSocket(byte[] data)
+	{
+		_instance?._ForwardToWebSocket(data);
+	}
 
-    private void _ForwardToWebSocket(byte[] data)
-    {
-        lock (_clientLock)
-        {
-            if (_currentClient?.WebSocket.State == WebSocketState.Open)
-            {
-                _ = SendAsync(_currentClient, data);
-            }
-        }
-    }
+	private void _ForwardToWebSocket(byte[] data)
+	{
+		lock (_clientLock)
+		{
+			if (_currentClient?.WebSocket.State == WebSocketState.Open)
+			{
+				_ = SendAsync(_currentClient, data);
+			}
+		}
+	}
 
-    protected override Task OnMessageReceivedAsync(IWebSocketContext context, byte[] buffer, IWebSocketReceiveResult result)
-    {
-        // 直接将收到的二进制数据转发到蓝牙设备
-        SendToBluetoothDevice(buffer);
-        return Task.CompletedTask;
-    }
+	protected override Task OnMessageReceivedAsync(IWebSocketContext context, byte[] buffer, IWebSocketReceiveResult result)
+	{
+		// 直接将收到的二进制数据转发到蓝牙设备
+		SendToBluetoothDevice(buffer);
+		return Task.CompletedTask;
+	}
 
-    protected override Task OnClientConnectedAsync(IWebSocketContext context)
-    {
-        lock (_clientLock)
-        {
-            _currentClient = context;
-        }
-        return Task.CompletedTask;
-    }
+	protected override Task OnClientConnectedAsync(IWebSocketContext context)
+	{
+		lock (_clientLock)
+		{
+			_currentClient = context;
+		}
+		return Task.CompletedTask;
+	}
 
-    protected override Task OnClientDisconnectedAsync(IWebSocketContext context)
-    {
-        lock (_clientLock)
-        {
-            if (_currentClient == context)
-            {
-                _currentClient = null;
-            }
-        }
-        return Task.CompletedTask;
-    }
+	protected override Task OnClientDisconnectedAsync(IWebSocketContext context)
+	{
+		lock (_clientLock)
+		{
+			if (_currentClient == context)
+			{
+				_currentClient = null;
+			}
+		}
+		return Task.CompletedTask;
+	}
 
-    private async void SendToBluetoothDevice(byte[] data)
-    {
-        if (ApiController.ble_writeChar != null)
-        {
-            var writer = new DataWriter();
-            writer.WriteBytes(data);
-            await ApiController.ble_writeChar.WriteValueAsync(writer.DetachBuffer());
-        }
-    }
+	private async void SendToBluetoothDevice(byte[] data)
+	{
+		if (ApiController.ble_writeChar != null)
+		try {
+			var writer = new DataWriter();
+			writer.WriteBytes(data);
+			var status = await ApiController.ble_writeChar.WriteValueAsync(writer.DetachBuffer(), GattWriteOption.WriteWithoutResponse);
+				Console.WriteLine($"写入状态: {status}");
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"写入异常: {ex.Message} (0x{ex.HResult:X})");
+		}
+	}
 }
 

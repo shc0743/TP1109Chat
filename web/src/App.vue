@@ -1,11 +1,17 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, markRaw } from 'vue';
 import ChatActivity from './components/ChatActivity.vue';
 import BluetoothActivity from './components/BluetoothActivity.vue';
 import SerialActivity from './components/SerialActivity.vue';
+import SettingsActivity from './components/SettingsActivity.vue';
 
 const page = ref('chat')
-const pages = ref([['chat', '聊天'], ['blue', '蓝牙'], ['seri', '串口']]);
+const pages = ref([
+    ['chat', '聊天', markRaw(ChatActivity)],
+    ['blue', '蓝牙', markRaw(BluetoothActivity)],
+    ['seri', '串口', markRaw(SerialActivity)],
+    ['sett', '设置', markRaw(SettingsActivity)],
+]);
 </script>
 
 <template>
@@ -15,9 +21,9 @@ const pages = ref([['chat', '聊天'], ['blue', '蓝牙'], ['seri', '串口']]);
         </nav>
 
         <div class="app-area">
-            <ChatActivity v-show="page === 'chat'"/>
-            <BluetoothActivity v-show="page === 'blue'"/>
-            <SerialActivity v-show="page === 'seri'"/>
+            <template v-for="item in pages" :key="item[0]">
+                <component :is="item[2]" v-show="page === item[0]"/>
+            </template>
         </div>
     </div>
 </template>

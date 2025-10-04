@@ -4,13 +4,13 @@ plugins {
 
 android {
     namespace 'com.furieau.apps.tp1109chatandroidapp'
-    compileSdk 36
+    compileSdk = 36
 
     defaultConfig {
         applicationId "com.furieau.apps.tp1109chatandroidapp"
         minSdk 29
         targetSdk 36
-        versionCode 12070100001
+        versionCode 1207010001
         versionName "1.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -26,7 +26,6 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }

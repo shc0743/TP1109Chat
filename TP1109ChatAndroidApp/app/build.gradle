@@ -10,8 +10,8 @@ android {
         applicationId "com.furieau.apps.tp1109chatandroidapp"
         minSdk 29
         targetSdk 36
-        versionCode 1
-        versionName "1.0"
+        versionCode 12070100001
+        versionName "1.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -26,7 +26,9 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
@@ -36,7 +38,6 @@ android {
 }
 
 dependencies {
-
     implementation libs.appcompat
     implementation libs.material
     implementation libs.activity
@@ -48,7 +49,7 @@ dependencies {
     implementation libs.nanohttpd
     implementation libs.nanohttpd.websocket
     implementation libs.gson
-    // 蓝牙
+    
     implementation libs.core.ktx
     implementation libs.activity.ktx
 }

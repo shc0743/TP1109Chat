@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\TP1109Chat\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{62A44BAB-C4C8-4030-B54D-9D4DD8EAF62A}|TP1109ChatWebApp\\TP1109ChatWebApp.csproj|d:\\software\\program\\source\\git\\github.com\\shc0743\\tp1109chat\\tp1109chatwebapp\\api.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{62A44BAB-C4C8-4030-B54D-9D4DD8EAF62A}|TP1109ChatWebApp\\TP1109ChatWebApp.csproj|solutionrelative:tp1109chatwebapp\\api.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{62A44BAB-C4C8-4030-B54D-9D4DD8EAF62A}|TP1109ChatWebApp\\TP1109ChatWebApp.csproj|d:\\software\\program\\source\\git\\github.com\\shc0743\\tp1109chat\\tp1109chatwebapp\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{62A44BAB-C4C8-4030-B54D-9D4DD8EAF62A}|TP1109ChatWebApp\\TP1109ChatWebApp.csproj|solutionrelative:tp1109chatwebapp\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{62A44BAB-C4C8-4030-B54D-9D4DD8EAF62A}|TP1109ChatWebApp\\TP1109ChatWebApp.csproj|d:\\software\\program\\source\\git\\github.com\\shc0743\\tp1109chat\\tp1109chatwebapp\\api.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{62A44BAB-C4C8-4030-B54D-9D4DD8EAF62A}|TP1109ChatWebApp\\TP1109ChatWebApp.csproj|solutionrelative:tp1109chatwebapp\\api.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Bookmark",
@@ -38,7 +38,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "API.cs",
               "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\TP1109Chat\\TP1109ChatWebApp\\API.cs",
               "RelativeDocumentMoniker": "TP1109ChatWebApp\\API.cs",
@@ -46,12 +46,11 @@
               "RelativeToolTip": "TP1109ChatWebApp\\API.cs",
               "ViewState": "AgIAAIoAAAAAAAAAAAAqwJMAAAAkAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-03T12:58:32.891Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-03T12:58:32.891Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "Program.cs",
               "DocumentMoniker": "D:\\software\\Program\\source\\git\\github.com\\shc0743\\TP1109Chat\\TP1109ChatWebApp\\Program.cs",
               "RelativeDocumentMoniker": "TP1109ChatWebApp\\Program.cs",
@@ -59,7 +58,8 @@
               "RelativeToolTip": "TP1109ChatWebApp\\Program.cs",
               "ViewState": "AgIAALABAAAAAAAAAAAcwMkBAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-02T13:43:45.979Z"
+              "WhenOpened": "2025-10-02T13:43:45.979Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Bookmark",

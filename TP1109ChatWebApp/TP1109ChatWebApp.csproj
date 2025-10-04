@@ -15,6 +15,7 @@
     <DebugSymbols>true</DebugSymbols>
     <UseWindowsForms>True</UseWindowsForms>
     <UseWPF>False</UseWPF>
+    <VersionPrefix>1.0.1</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>

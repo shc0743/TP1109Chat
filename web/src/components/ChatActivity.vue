@@ -524,7 +524,8 @@ async function handleNewMessage(data, target, source) {
     if (!isReceiver) return; // ignore messages not for me
     data.pkey = source;
     data.expectedTarget = target;
-    if (currentChatUserInfo.value && (source === currentChatUserInfo.value.pkey || currentChatUserInfo.value.pkey === '*')) {
+    const isPublicChannel = isBroadcast && (target.length === 1);
+    if (currentChatUserInfo.value && (source === currentChatUserInfo.value.pkey || (currentChatUserInfo.value.pkey === '*' && isPublicChannel))) {
         messages.value.push(data);
         nextTick(() => {
             messageArea.value.scrollTop = messageArea.value.scrollHeight;
@@ -540,7 +541,7 @@ async function handleNewMessage(data, target, source) {
     else {
         // 不是当前聊天对象的消息（位于后台）
         try {
-            if (isBroadcast && (target.length === 1)) {
+            if (isPublicChannel) {
                 // 公共频道
                 const pubmessages = (await File.exists(`MsgAttach$0.db`)) ? (await File.readJSON(`MsgAttach$0.db`)) : [];
                 pubmessages.push(data);

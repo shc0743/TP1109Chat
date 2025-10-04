@@ -10,8 +10,8 @@ android {
         applicationId "com.furieau.apps.tp1109chatandroidapp"
         minSdk 29
         targetSdk 36
-        versionCode 1207010001
-        versionName "1.0.1"
+        versionCode 1207010002
+        versionName "1.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

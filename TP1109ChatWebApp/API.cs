@@ -145,7 +145,19 @@ public class ApiController : WebApiController
 			}
 		}
 	}
+	[Route(HttpVerbs.Get, "/platform")]
+	public object GetPlatformInfo()
+	{
+		return new {
+			platform = "Windows",
+			version = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
+			arch = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(),
+			runtime = System.Runtime.InteropServices.RuntimeInformation.RuntimeIdentifier,
+		};
+	}
 
+	/* ---- */
+	// 文件系统
 	[Route(HttpVerbs.Get, "/fs/object")]
 	public async Task GetFile()
 	{

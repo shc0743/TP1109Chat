@@ -1,5 +1,5 @@
 <script setup>
-import { ref, markRaw, onMounted } from 'vue';
+import { ref, markRaw, onMounted, nextTick } from 'vue';
 import ChatActivity from './components/ChatActivity.vue';
 import BluetoothActivity from './components/BluetoothActivity.vue';
 import SerialActivity from './components/SerialActivity.vue';
@@ -8,14 +8,16 @@ import File from './file';
 import { ElMessage } from 'element-plus';
 
 const page = ref('chat')
-const pages = ref([
+const pages = ref([]);
+const pages_default_data = [
     ['chat', '聊天', markRaw(ChatActivity)],
     ['blue', '蓝牙', markRaw(BluetoothActivity)],
     ['seri', '串口', markRaw(SerialActivity)],
     ['sett', '设置', markRaw(SettingsActivity)],
-]);
+];
 const profileSelector = ref(null);
 const profile = ref('');
+const platform = ref({});
 
 function finalizeProfileSelector(accept) {
     if (!accept) {
@@ -31,11 +33,23 @@ function finalizeProfileSelector(accept) {
     location.reload();
 }
 
-onMounted(() => {
+onMounted(async () => {
     if (location.search.includes("select_profile=true")) {
         if (null === sessionStorage.getItem("profile")) {
             profileSelector.value.showModal();
         }
+    }
+
+    try {
+        platform.value = await (await fetch('/api/platform')).json();
+    }
+    catch (e) {
+        ElMessage.error('Platform 信息加载失败: ' + e);
+    }
+    await new Promise(r => nextTick(r));
+    pages.value = pages_default_data;
+    if (platform.value.platform === 'Android') {
+        pages.value.splice(2, 1); // 移除串口页面
     }
 })
 </script>
@@ -48,7 +62,7 @@ onMounted(() => {
 
         <div class="app-area">
             <template v-for="item in pages" :key="item[0]">
-                <component :is="item[2]" v-show="page === item[0]"/>
+                <component :is="item[2]" v-show="page === item[0]" :platform="platform" />
             </template>
         </div>
 

@@ -1,6 +1,9 @@
 <template>
-    <div data-root>
-        <h1 style="margin-top: 0;">串口设置</h1>
+    <div data-root :data-platform="props.platform.platform">
+        <h1 style="margin-top: 0;" class="page-title">串口设置</h1>
+        <div class="row android-not-supported-info" v-if="props.platform.platform === 'Android'">
+            Android 平台不支持串口调试
+        </div>
         <div class="row">
             <span>串口端口：</span>
             <ElSelect :disabled="isConnected" v-model="port" placeholder="请选择串口端口" @focus="scanPorts">
@@ -67,6 +70,13 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { ElCheckbox, ElMessage } from 'element-plus';
 
+const props = defineProps({
+    platform: {
+        type: Object,
+        default: {},
+    },
+});
+
 const serialPorts = ref([]);
 const baudRate = ref("115200");
 const baudRates = ref(["9600", "19200", "38400", "57600", "115200"]);
@@ -82,6 +92,9 @@ const autoRecvTimerId = ref(0);
 const autoCRLF = ref(true);
 
 onMounted(() => {
+    if (props.platform.platform === 'Android') {
+        return;
+    }
     autoRecvTimerId.value = setInterval(() => {
         if (autoRecv.value && isConnected.value) {
             execRecvData({ ignoreEmpty: true });
@@ -89,6 +102,9 @@ onMounted(() => {
     }, 1000);
 });
 onBeforeUnmount(() => {
+    if (props.platform.platform === 'Android') {
+        return;
+    }
     clearInterval(autoRecvTimerId.value);
     autoRecvTimerId.value = 0;
 });
@@ -281,5 +297,10 @@ async function execRecvData({ ignoreEmpty = false } = {}) {
 </script>
 
 <style scoped>
-
+[data-root][data-platform="Android"] > *:not(.page-title) {
+    display: none;
+}
+[data-root][data-platform="Android"] > .android-not-supported-info {
+    display: block !important;
+}
 </style>

@@ -1,6 +1,9 @@
 <template>
     <div data-root>
         <div class="chat-title">
+            <ElButton class="mr05 btn-menu" @click="friendsMenu = true"><el-icon>
+                    <Expand />
+                </el-icon></ElButton>
             <span>模式:</span>
             <ElRadioGroup :disabled="ws != null" v-model="chatMode" class="chat-mode-radio">
                 <ElRadio value="bluetooth">蓝牙</ElRadio>
@@ -11,11 +14,13 @@
             <ElButton style="margin-left: 1em;" @click="ElMessageBox.prompt('我的公钥', {
                 inputValue: myKeys.pub,
             })">我的公钥</ElButton>
-            <ElButton style="margin-left: 1em;" @click="updateNickname" @contextmenu.prevent="notes = myNickname">我的昵称</ElButton>
+            <span style="margin-left: 1em;">注意: 加密功能尚未完成!! 数据将明文传输!</span>
+            <ElButton style="margin-left: 1em;" @click="updateNickname" @contextmenu.prevent="notes = myNickname">我的昵称
+            </ElButton>
         </div>
 
         <div class="chat-main-view">
-            <div class="left-view" style="width: 200px;">
+            <div class="left-view" style="width: 200px;" :data-open="friendsMenu">
                 <div class="chat-users-title" @click="switchUser(null)">
                     <span style="flex: 1;" title="点击此处或者按 Esc 可以关闭对话">好友列表</span>
                     <a href="javascript:" @click.prevent.stop="addUserDialog.showModal()">添加</a>
@@ -26,7 +31,11 @@
                         @click="switchUser(user.id)" @keydown.enter.prevent="switchUser(user.id)">
                         <span>{{ user.name }}</span>
                         <!-- 使用 visibility 以便公共频道与其他元素有相同的高度 -->
-                        <ElButton class="user-edit-button" :style="{ visibility: (user.id !== 0) ? 'visible' : 'hidden' }" text @click.prevent.stop="editUserInfo(user)"><el-icon><Edit /></el-icon></ElButton>
+                        <ElButton class="user-edit-button"
+                            :style="{ visibility: (user.id !== 0) ? 'visible' : 'hidden' }" text
+                            @click.prevent.stop="editUserInfo(user)"><el-icon>
+                                <Edit />
+                            </el-icon></ElButton>
                     </div>
                 </div>
             </div>
@@ -40,31 +49,52 @@
                 <template v-else>
                     <div class="chat-user-name-view">
                         <span>{{ currentChatUserInfo.name }}</span>
-                        <ElButton text @click="userOptionDialog.showModal()"><el-icon><MoreFilled /></el-icon></ElButton>
+                        <ElButton text @click="userOptionDialog.showModal()"><el-icon>
+                                <MoreFilled />
+                            </el-icon></ElButton>
                     </div>
 
-                    <div class="chat-messages-container" ref="messageArea">
+                    <div class="chat-messages-container" ref="messageArea" :data-is-multiple="multiSelection">
                         <template v-for="msg in messages" :key="msg.id">
-                            <ChatMessageRenderer :message="msg" />
+                            <ChatMessageRenderer :message="msg" :is-multiple-selection="multiSelection"
+                                @delete-message="handleDeleteMessage" @open-avatar="handleOpenAvatar"
+                                @start-multiple-selection="multiSelection = true"
+                                @update-selection="(selected) => msg.isSelected = selected" />
                         </template>
                     </div>
 
+                    <div class="chat-multiple-functions" v-if="multiSelection">
+                        <ElButton @click="multiSelection = false"><el-icon>
+                                <Close />
+                            </el-icon></ElButton>
+                        <ElButton type="danger" plain @click="handleDeleteSelectedMessages">删除选中消息</ElButton>
+                    </div>
+
                     <div class="chat-input">
-                        <ElInput v-model="inputMessage.text" placeholder="输入消息" type="textarea" :rows="2" clearable @keydown.enter="ev => {
+                        <ElInput v-model="inputMessage.text" placeholder="输入消息" type="textarea" :rows="2" clearable
+                            @keydown.enter="ev => {
                             if (ev.shiftKey) return;
                             ev.preventDefault();
                             sendMessage();
                         }"></ElInput>
                         <ElButton type="primary" plain @click="sendMessage">发送</ElButton>
-                        <ElButton><el-icon><Plus /></el-icon></ElButton>
+                        <ElButton><el-icon>
+                                <Plus />
+                            </el-icon></ElButton>
                     </div>
                 </template>
             </div>
         </div>
 
-        <dialog ref="addUserDialog" class="plain-dialog" style="width: 250px;" @close="addUserAddr = addUserName = addUserPkey = addUserStatus = ''">
+        <div class="notes-view" v-show="!!notes">
+            <div class="notes-content" v-text="notes"></div>
+        </div>
+
+        <dialog ref="addUserDialog" class="plain-dialog" style="width: 250px;"
+            @close="addUserAddr = addUserName = addUserPkey = addUserStatus = ''">
             <div class="dialog-content">
-                <div style="font-weight: bold; margin-bottom: 0.5em; font-size: x-large; text-align: center;">{{ addUserStatus ? '编辑好友' : '添加好友' }}</div>
+                <div style="font-weight: bold; margin-bottom: 0.5em; font-size: x-large; text-align: center;">{{
+                    addUserStatus ? '编辑好友' : '添加好友' }}</div>
                 <form @submit.prevent="handleAddUserSubmit">
                     <label class="form-group">
                         <span class="desc">好友名称:</span>
@@ -79,7 +109,8 @@
                         <ElInput v-model="addUserPkey" required></ElInput>
                     </label>
                     <div class="form-group action-buttons">
-                        <ElButton v-if="addUserStatus" type="danger" plain @click="editUserInfo('delete')">删除此好友</ElButton>
+                        <ElButton v-if="addUserStatus" type="danger" plain @click="editUserInfo('delete')">删除此好友
+                        </ElButton>
                         <button class="el-button el-button--primary is-plain" type="submit">确定</button>
                         <ElButton @click="addUserDialog.close()">取消</ElButton>
                     </div>
@@ -90,26 +121,44 @@
         <dialog ref="userOptionDialog" class="plain-dialog" style="width: 250px;">
             <div class="dialog-content">
                 <div class="col" style="display: flex; flex-direction: column;">
-                    <ElButton type="danger" plain @click="(clearCurrentChatHistory(), userOptionDialog.close())">清空聊天记录</ElButton>
+                    <ElButton type="danger" plain @click="(clearCurrentChatHistory(), userOptionDialog.close())">清空聊天记录
+                    </ElButton>
                     <ElButton @click="userOptionDialog.close()">取消</ElButton>
                 </div>
             </div>
         </dialog>
 
-        <div class="notes-view" v-show="!!notes">
-            <div class="notes-content" v-text="notes"></div>
-        </div>
+        <dialog ref="userProfileDialog" class="plain-dialog" style="min-width: 250px; max-width: calc(100% - 50px); box-sizing: border-box;">
+            <div class="dialog-content">
+                <div class="user-profile-dialog-title">{{ userProfileDialogData.name || userProfileDialogData.nickname }}</div>
+                <div v-if="(userProfileDialogData.name && userProfileDialogData.nickname)" class="user-profile-dialog-nickname">昵称: {{ userProfileDialogData.nickname }}</div>
+                <div class="form-group">
+                    <span class="desc">{{ userProfileDialogData.isFriend ? "好友" : "用户" }}的 ECC 公钥:</span>
+                    <ElInput :modelValue="userProfileDialogData.pkey" readonly @update:modelValue="() => { }" />
+                </div>
+                <div class="form-group action-buttons">
+                    <ElButton @click="userProfileDialog.close()">取消</ElButton>
+                </div>
+            </div>
+        </dialog>
     </div>
 </template>
 
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { ElButton, ElMessage, ElMessageBox } from 'element-plus';
-import { Edit, Plus, MoreFilled } from '@element-plus/icons-vue';
+import { Edit, Plus, MoreFilled, Expand, Close } from '@element-plus/icons-vue';
 import File from '../file';
 import ECCCrypto from '../keys';
 import { FragmentManager, PacketBuffer, PacketDecoder, PacketEncoder, PROTOCOL } from '../protocol';
 import ChatMessageRenderer from './ChatMessageRenderer.vue';
+
+const props = defineProps({
+    platform: {
+        type: Object,
+        default: () => ({})
+    }
+});
 
 const chatMode = ref('bluetooth');
 const ws = ref(null);
@@ -143,7 +192,7 @@ const inputMessage = ref({
     text: ''
 });
 const messageArea = ref(null);
-
+const friendsMenu = ref(false);
 const notesTimer = ref(null);
 const notesData = ref('');
 const notes = computed({
@@ -156,7 +205,10 @@ const notes = computed({
             notesTimer.value = null;
         }, 3000);
     }
-})
+});
+const multiSelection = ref(false);
+const userProfileDialog = ref(null);
+const userProfileDialogData = ref({});
 
 onMounted(() => {
     initUsers();
@@ -245,16 +297,22 @@ async function sendData(d, targetAddress) {
     }
 }
 
-async function initUsers() {
+async function initUsers(count = 0) {
     try {
-        if (!(await File.exists('users.json'))) {
+        if (!(await File.exists('users.json')) || !(await File.info('users.json'))?.size) {
             await File.writeJSON('users.json', users.value);
             return;
         }
         const usersJson = await File.readJSON('users.json');
-        if (usersJson) users.value = usersJson;
+        if (Array.isArray(usersJson)) users.value = usersJson;
+        else ElMessage.error("好友列表文件格式错误");
     }
     catch (e) {
+        if (count < 3) {
+            await new Promise(r => setTimeout(r, 10)); // 等待
+            initUsers(count + 1); // 重试3次
+            return;
+        }
         ElMessage.error(`初始化好友列表失败: ${e}`);
     }
 }
@@ -295,8 +353,10 @@ async function handleAddUserSubmit() {
 
 async function switchUser(id) {
     currentChatUser.value = id;
-    // 加载消息
     messages.value = [];
+    friendsMenu.value = false;
+    if (!id) return;
+    // 加载消息
     try {
         if (!(await File.exists(`MsgAttach$${id}.db`))) {
             return; // 消息文件是空的
@@ -349,11 +409,18 @@ async function editUserInfo(user) {
 async function clearCurrentChatHistory() {
     const id = currentChatUser.value;
     try {
+        // 确认清空
+        await ElMessageBox.confirm("确认要清空当前聊天记录吗？", "清空聊天记录", {
+            confirmButtonText: "清空",
+            cancelButtonText: "取消",
+            type: "warning",
+        });
         await File.unlink(`MsgAttach$${id}.db`);
         messages.value = [];
         ElMessage.success(`已清空聊天记录`);
     }
     catch (e) {
+        if (e === 'cancel') return;
         ElMessage.error(`清空聊天记录失败: ${e}`);
     }
 }
@@ -420,7 +487,7 @@ async function sendMessage() {
     inputMessage.value.text = '';
     try {
         await sendData({
-            u: (currentChatUser.value === 0 ? '*' : myKeys.value.pub),
+            u: myKeys.value.pub,
             t: [currentChatUserInfo.value.pkey],
             d: messageObj,
         }, currentChatUserInfo.value.addr);
@@ -429,6 +496,7 @@ async function sendMessage() {
         return ElMessage.error(`发送消息失败: ${e}`);
     }
     messageObj.isSender = true;
+    messageObj.pkey = myKeys.value.pub;
     messages.value.push(messageObj);
     nextTick(() => {
         messageArea.value.scrollTop = messageArea.value.scrollHeight;
@@ -445,24 +513,34 @@ async function sendMessage() {
 
 async function handleNewMessage(data, target, source) {
     if (!Array.isArray(target)) return;
-    let hasReceiver = false;
+    let isReceiver = false, isBroadcast = false;
     for (const i of target) {
         if (i === myKeys.value.pub || i === '*') {
-            hasReceiver = true;
+            isReceiver = true;
+            isBroadcast = (i === '*');
             break;
         }
     }
-    if (!hasReceiver) return;
+    if (!isReceiver) return; // ignore messages not for me
+    data.pkey = source;
+    data.expectedTarget = target;
     if (currentChatUserInfo.value && source === currentChatUserInfo.value.pkey) {
         messages.value.push(data);
         nextTick(() => {
             messageArea.value.scrollTop = messageArea.value.scrollHeight;
         });
+        // 保存消息记录
+        try {
+            await File.writeJSON(`MsgAttach$${currentChatUser.value}.db`, messages.value);
+        }
+        catch (e) {
+            ElMessage.error(`保存消息记录失败: ${e}`);
+        }
     }
     else {
         // 不是当前聊天对象的消息（位于后台）
         try {
-            if (source === '*') {
+            if (isBroadcast && (target.length === 1)) {
                 // 公共频道
                 const pubmessages = (await File.exists(`MsgAttach$0.db`)) ? (await File.readJSON(`MsgAttach$0.db`)) : [];
                 pubmessages.push(data);
@@ -485,6 +563,61 @@ async function handleNewMessage(data, target, source) {
         }
     }
 }
+
+async function handleDeleteMessage(msg) {
+    const index = messages.value.indexOf(msg);
+    if (index === -1) return;
+    // 确认删除
+    try {
+        await ElMessageBox.confirm("确定删除这条消息吗？", "删除确认", {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
+        });
+    } catch { return }
+    messages.value.splice(index, 1);
+    // 保存消息记录
+    try {
+        await File.writeJSON(`MsgAttach$${currentChatUser.value}.db`, messages.value);
+    }
+    catch (e) {
+        ElMessage.error(`保存消息记录失败: ${e}`);
+    }
+}
+async function handleDeleteSelectedMessages() {
+    try {
+        await ElMessageBox.confirm(`确定删除选中的 ${messages.value.filter(msg => msg.isSelected).length} 条消息吗？`, "删除确认", {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
+        });
+    } catch { return }
+    messages.value = messages.value.filter(msg => !msg.isSelected);
+    multiSelection.value = false;
+    // 保存消息记录
+    try {
+        await File.writeJSON(`MsgAttach$${currentChatUser.value}.db`, messages.value);
+    }
+    catch (e) {
+        ElMessage.error(`保存消息记录失败: ${e}`);
+    }
+}
+async function handleOpenAvatar(msg) {
+    userProfileDialogData.value = {
+        nickname: msg.sender,
+        pkey: msg.pkey,
+        name: '',
+        isFriend: false,
+    };
+    userProfileDialog.value.showModal();
+    // 查找用户信息
+    if (!msg.pkey) return;
+    const user = users.value.find(u => u.pkey === msg.pkey);
+    if (user) {
+        userProfileDialogData.value.name = user.name;
+        userProfileDialogData.value.isFriend = true;
+    }
+}
 </script>
 
 <style scoped>
@@ -496,12 +629,18 @@ async function handleNewMessage(data, target, source) {
     display: flex;
     align-items: center;
     margin-bottom: 0.5em;
+    overflow: auto;
+    white-space: nowrap;
 }
 .chat-title > span {
     margin: 0 1em;
+    white-space: nowrap;
 }
 .chat-title > span:nth-child(1) {
     margin-left: 0;
+}
+.chat-title > .el-radio-group {
+    flex-wrap: nowrap;
 }
 .chat-main-view {
     flex: 1;
@@ -571,6 +710,10 @@ async function handleNewMessage(data, target, source) {
 .chat-user-item:active, .chat-user-item.active {
     background-color: #e0e0e0;
 }
+.chat-user-item:focus-visible {
+    outline: 2px solid rgb(160, 207, 255);
+    transition: outline-offset 0s, outline 0s;
+}
 .form-group {
     display: flex;
     flex-direction: column;
@@ -616,8 +759,13 @@ async function handleNewMessage(data, target, source) {
     overflow: auto;
     padding: 0.5em;
 }
+.chat-multiple-functions {
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-bottom: 0;
+}
 .chat-input {
-    margin-top: 10px;
     padding: 10px;
     border: 1px solid #ccc;
     background-color: #fff;
@@ -652,5 +800,47 @@ async function handleNewMessage(data, target, source) {
 .dialog-content .col > .el-button+ .el-button {
     margin-top: 0.5em;
     margin-left: 0;
+}
+.user-profile-dialog-title, .user-profile-dialog-nickname {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.user-profile-dialog-title {
+    font-weight: bold;
+    font-size: larger;
+    text-align: center;
+    margin-bottom: 5px;
+}
+.user-profile-dialog-nickname {
+    color: gray;
+    margin-bottom: 0.5em;
+}
+.chat-title > .btn-menu, .mobile-backdrop {
+    display: none;
+}
+@media screen and (max-width: 600px) {
+    .left-view {
+        display: none;
+    }
+    .chat-title > .btn-menu {
+        display: block;
+    }
+    .left-view[data-open="true"] {
+        display: flex;
+        position: absolute;
+        left: 0;
+        top: 0; bottom: 0;
+        /* width: 200px; */
+        /* max-width: 100vw; */
+        width: revert !important;
+        right: 0;
+        background-color: #fff;
+        padding: 10px;
+        margin-right: 0;
+        border-right: 0;
+        box-sizing: border-box;
+        z-index: 200;
+    }
 }
 </style>

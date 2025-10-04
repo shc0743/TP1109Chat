@@ -33,6 +33,18 @@
 *.out
 *.app
 
+# Android
+*.iml
+.gradle
+.DS_Store
+TP1109ChatAndroidApp/build
+TP1109ChatAndroidApp/captures
+.externalNativeBuild
+.cxx
+local.properties
+TP1109ChatAndroidApp/app/release
+TP1109ChatAndroidApp/gradle/wrapper/*
+
 # Other
 copilot-chat
 CopilotIndices
@@ -47,3 +59,4 @@ ProjectEvaluation
 *cache.v2
 packages
 obj
+node_modules

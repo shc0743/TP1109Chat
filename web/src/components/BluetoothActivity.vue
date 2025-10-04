@@ -22,6 +22,9 @@
         <div class="row">
             注意：即使已知设备地址，也可能需要先扫描
         </div>
+        <div class="row" v-if="props.platform.platform === 'Android'">
+            <ElButton @click="askPermission">授权</ElButton>
+        </div>
         <div class="row">
             <span>UUID参考:</span>
         </div>
@@ -50,6 +53,13 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { ElMessage, ElProgress } from 'element-plus';
+
+const props = defineProps({
+    platform: {
+        type: Object,
+        default: () => ({})
+    }
+});
 
 const devices = ref([]);
 const device = ref('');
@@ -124,7 +134,13 @@ function handleDialogCancel() {
 }
 
 function getDevLabel(dev) {
-    return `${dev.index}: ${dev.name || '(no name)'} rssi=${dev.rssi} addr=0x${BigInt(dev.addr).toString(16).padStart(12, '0')}`;
+    try {
+        return `${dev.index}: ${dev.name || '(no name)'} rssi=${dev.rssi} addr=0x${BigInt(dev.addr).toString(16).padStart(12, '0')}`;
+    }
+    catch (e) {
+        if (!dev) return 'Invalid entry';
+        return dev.index + ': ' + dev.name + ': ' + e;
+    }
 }
 
 async function connectOrDisconnect() {
@@ -205,6 +221,26 @@ function connectByAddress() {
         return;
     }
     connectAddr(parseInt(address.value.replace(/^0x/i, ''), 16));
+}
+
+async function askPermission() {
+    if (props.platform.platform !== 'Android') {
+        ElMessage.error("仅限 Android 平台下使用");
+        return;
+    }
+    ElMessage.info("正在请求授权，请稍候…");
+    try {
+        const { success, error } = await (await fetch("/api/askPerm", {
+            method: "POST",
+        })).json();
+        if (!success || error) {
+            ElMessage.error("请求授权失败: " + (error || "未知错误"));
+            return;
+        }
+    }
+    catch (error) {
+        ElMessage.error("请求授权失败：" + error);
+    }
 }
 </script>
 

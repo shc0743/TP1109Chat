@@ -26,7 +26,7 @@
         <fieldset>
             <legend>配置文件</legend>
             <div>当前配置文件: <ElButton @click="getProfile">{{ (currentProfile == null) ? "点击获取" : (currentProfile || "默认配置文件") }}</ElButton></div>
-            <ElButton @click="setProfile">选择配置文件</ElButton>
+            <ElButton @click="setProfile" :disabled="props.platform.platform === 'Android'">选择配置文件</ElButton>
         </fieldset>
     </div>
 </template>
@@ -35,6 +35,13 @@
 import { onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import File from '../file';
+
+const props = defineProps({
+    platform: {
+        type: Object,
+        default: {},
+    },
+});
 
 const installed = ref(null);
 const isInstalling = ref(false);

@@ -355,7 +355,7 @@ async function switchUser(id) {
     currentChatUser.value = id;
     messages.value = [];
     friendsMenu.value = false;
-    if (!id) return;
+    if (null == id) return;
     // 加载消息
     try {
         if (!(await File.exists(`MsgAttach$${id}.db`))) {
@@ -524,7 +524,7 @@ async function handleNewMessage(data, target, source) {
     if (!isReceiver) return; // ignore messages not for me
     data.pkey = source;
     data.expectedTarget = target;
-    if (currentChatUserInfo.value && source === currentChatUserInfo.value.pkey) {
+    if (currentChatUserInfo.value && (source === currentChatUserInfo.value.pkey || currentChatUserInfo.value.pkey === '*')) {
         messages.value.push(data);
         nextTick(() => {
             messageArea.value.scrollTop = messageArea.value.scrollHeight;
